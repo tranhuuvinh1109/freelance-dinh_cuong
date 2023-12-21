@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 	'media',
 	'rest_framework',
+	'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -70,6 +71,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'manage.wsgi.application'
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 
 # Database

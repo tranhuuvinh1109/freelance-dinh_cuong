@@ -7,9 +7,13 @@ import openpyxl
 from openpyxl import load_workbook
 
 
+class Check(APIView):
+		def get(self, request):
+				return Response({'message': 'Running...'}, status=status.HTTP_200_OK)
+
 class CreateMediaSheet(APIView):
 		def get(self, request):
-				workbook = xlsxwriter.Workbook('hello.xlsx')
+				workbook = xlsxwriter.Workbook('vimmm.xlsx')
 				worksheet = workbook.add_worksheet()
 				worksheet.write('A1', 'Hello..')
 				worksheet.write('B1', 'Geeks')
@@ -21,7 +25,7 @@ class CreateMediaSheet(APIView):
 class GetDataSheet(APIView):
     def get(self, request):
         try:
-            workbook = load_workbook('hello.xlsx')
+            workbook = load_workbook('vimmm.xlsx')
             worksheet = workbook.active
 
             data = []
@@ -48,12 +52,12 @@ class InsertData(APIView):
             column_C = request.data.get('column_C')
             column_D = request.data.get('column_D')
 
-            workbook = load_workbook('hello.xlsx')
+            workbook = load_workbook('vimmm.xlsx')
             worksheet = workbook.active
 
             new_row = [column_A, column_B, column_C, column_D]
             worksheet.append(new_row)
-            workbook.save('hello.xlsx')
+            workbook.save('vimmm.xlsx')
 
             return Response({'message': 'Data inserted successfully'}, status=status.HTTP_201_CREATED)
 
