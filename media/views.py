@@ -1,3 +1,4 @@
+import mimetypes
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,8 +8,17 @@ import openpyxl
 from django.core.exceptions import SuspiciousFileOperation
 from openpyxl import load_workbook
 import os
+from django.core.files import File
+from media.models import Media
+
+from media.serializers import MediaSerializer
+from . import action
+from django.http import HttpResponse, HttpResponseNotFound
+from django.utils.encoding import smart_str
+from wsgiref.util import FileWrapper
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PATH_SAVE_DIR = os.path.join(BASE_DIR, 'data')
+PATH_SAVE_DIR = os.path.join(BASE_DIR, 'manage/media')
 class Check(APIView):
     def get(self, request):
         try:
@@ -46,24 +56,12 @@ class GetDataSheet(APIView):
     def get(self, request, *args, **kwargs):
         try:
             name = kwargs.get('name')
+            sheet = kwargs.get('sheet')
             path = os.path.join(PATH_SAVE_DIR, name + '.xlsx')
+            res = action.get_data_sheet(path, sheet)
+            
 
-            if not os.path.exists(path):
-                raise SuspiciousFileOperation("File not found")
-
-            workbook = load_workbook(path)
-            worksheet = workbook.active
-
-            data = []
-            for row in worksheet.iter_rows(min_row=2, values_only=True):
-                data.append({
-                    'column_A': row[0],
-                    'column_B': row[1],
-                    'column_C': row[2],
-                    'column_D': row[3],
-                })
-
-            return Response({'message': 'ok', 'data': data}, status=status.HTTP_200_OK)
+            return Response(res, status=status.HTTP_200_OK)
 
         except SuspiciousFileOperation as e:
             return Response({'message': str(e)}, status=status.HTTP_404_NOT_FOUND)
@@ -93,6 +91,157 @@ class InsertData(APIView):
 
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class InsertDataLocation(APIView):
+    def post(self, request):
+        try:
+            location = request.data.get('location')
+            value = request.data.get('value')
+            sheet_name = request.data.get('sheet') 
+
+            # Get the file name from the request data (you may modify this part based on your needs)
+            name = request.data.get('name')
+            path = os.path.join(PATH_SAVE_DIR, name + '.xlsx')
+
+            res = action.insert(path, sheet_name, location, value)
+            return Response(res, status=status.HTTP_200_OK)
+
+        except FileNotFoundError as e:
+            return Response({'message': str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        except ValueError as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class MergeCells(APIView):
+    def post(self, request):
+        try:
+            start_cell = request.data.get('startCell')
+            end_cell = request.data.get('endCell')
+            name = request.data.get('name')
+            sheet = request.data.get('sheetName')
+            path = os.path.join(PATH_SAVE_DIR, name + '.xlsx')
+
+            res = action.merge_cell(path,sheet, start_cell, end_cell )
+
+            return Response(res, status=status.HTTP_200_OK)
+
+        except FileNotFoundError as e:
+            return Response({'message': str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class CreateNewSheet(APIView):
+    def post(self, request):
+        try:
+            name = request.data.get('name')
+            path = os.path.join(PATH_SAVE_DIR, name + '.xlsx')
+            new_sheet_name = request.data.get('newSheetName')
+            res = action.create_new_sheet(path, new_sheet_name)
+
+            return Response(res, status=status.HTTP_200_OK)
+
+        except FileNotFoundError as e:
+            return Response({'message': str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class Download(APIView):
+    def get(self, request):
+        file_name = 'media.xlsx'
+        file_path = os.path.join(BASE_DIR, 'manage/media', file_name)
+
+        try:
+            with open(file_path, 'rb') as f:
+                file_data = f.read()
+
+            # Sending response
+            response = HttpResponse(file_data, content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+
+        except IOError:
+            # Handle file not exist case here
+            response = HttpResponseNotFound('<h1>File not exist</h1>')
+
+        return response
+    
+class CreateMedia(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = MediaSerializer(data=request.data)
+
+        try:
+            
+            serializer.is_valid(raise_exception=True)
+
+            serializer.save()
+            file_name = 'media.xlsx'
+            file_path = os.path.join(BASE_DIR, 'manage/media', file_name)
+            values = [value for key, value in serializer.data.items() if key not in ['id', 'createAt', 'updateAt']]
+            res = action.insert_multiple(file_path, 'media',values )
+
+            return Response({'data': serializer.data, 'res': res}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class GetAllMedia(APIView):
+    def get(self, request, *args, **kwargs):
+        media_instances = Media.objects.all()
+
+        serializer = MediaSerializer(media_instances, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+class GetMediaByID(APIView):
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            media_instance = Media.objects.get(pk=pk)
+
+            serializer = MediaSerializer(media_instance)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Media.DoesNotExist:
+            return Response({'message': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class UpdateMedia(APIView):
+    def put(self, request, pk, *args, **kwargs):
+        try:
+            media_instance = Media.objects.get(pk=pk)
+
+            serializer = MediaSerializer(media_instance, data=request.data)
+
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Media.DoesNotExist:
+            return Response({'message': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteMedia(APIView):
+    def delete(self, request, pk, *args, **kwargs):
+        try:
+            media_instance = Media.objects.get(pk=pk)
+
+            media_instance.delete()
+
+            return Response({'message': 'Media deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+        except Media.DoesNotExist:
+            return Response({'message': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            # Handle unexpected exceptions
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 # class CheckWorker(APIView):
 #     def get(self, request):
 #         return Response({'message': 'Running...'}, status=status.HTTP_200_OK)
+
+    
