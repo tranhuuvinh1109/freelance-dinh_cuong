@@ -50,6 +50,7 @@ def insert(file, sheet, location, value):
     worksheet = workbook[sheet]
     worksheet[location] = value
     workbook.save(file)
+    workbook.close()
 
     return {'message': 'Insert success', 'sheet_name': sheet, 'updated_location': location, 'updated_value': value}
 
@@ -74,6 +75,7 @@ def insert_multiple(file, sheet, rows_of_values):
         worksheet[cell_location] = value
 
     workbook.save(file)
+    workbook.close()
 
     return {'message': 'Insert success', 'sheet_name': sheet, 'values': rows_of_values}
 
@@ -86,6 +88,7 @@ def create_new_sheet(file, new_sheet_name):
         workbook = load_workbook(file)
         new_sheet = workbook.create_sheet(title=new_sheet_name)
         workbook.save(file)
+        workbook.close()
 
         return {'message': 'Create new sheet success', 'file_name': file ,'new_sheet_name': new_sheet_name}
 
@@ -110,6 +113,7 @@ def merge_cell(file, sheet, start_cell, end_cell):
         worksheet.merge_cells(f"{start_cell}:{end_cell}")
 
         workbook.save(file)
+        workbook.close()
 
         return {'message': 'Merge cell success', 'merged_cells': f"{start_cell}:{end_cell}"}
 
@@ -168,6 +172,7 @@ def clear_data(file, sheet, start_row):
                 cell.value = None
 
         workbook.save(file)
+        workbook.close()
 
         return {'message': f'Data cleared from row {start_row} onwards in {sheet}'}
 
