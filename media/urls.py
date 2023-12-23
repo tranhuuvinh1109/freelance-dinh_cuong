@@ -9,6 +9,7 @@ urlpatterns = [
     path('location/', views.InsertDataLocation.as_view(), name='post'),
     path('merge/', views.MergeCells.as_view(), name='post'),
     path('download/', views.Download.as_view(), name='post'),
+    path('clear-sheet/', views.ClearSheet.as_view(), name='post'),
     path('create-sheet/', views.CreateNewSheet.as_view(), name='sheet'),
     path('media/create', views.CreateMedia.as_view(), name='sheet'),
     path('media/update/<int:media_id>/', views.UpdateMedia.as_view(), name='sheet'),

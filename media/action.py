@@ -150,3 +150,29 @@ def download_excel(file_name='media.xlsx'):
         response['Content-Disposition'] = 'attachment; filename=%s' % smart_str(file_name)
 
     return response
+
+def clear_data(file, sheet, start_row):
+    try:
+        if not os.path.exists(file):
+            raise FileNotFoundError("File not found")
+
+        workbook = load_workbook(file)
+
+        if sheet not in workbook.sheetnames:
+            return {'message': f"Sheet '{sheet}' not found in the workbook"}
+
+        worksheet = workbook[sheet]
+        for row in range(start_row, worksheet.max_row + 1):
+            for col in range(1, worksheet.max_column + 1):
+                cell = worksheet.cell(row=row, column=col)
+                cell.value = None
+
+        workbook.save(file)
+
+        return {'message': f'Data cleared from row {start_row} onwards in {sheet}'}
+
+    except FileNotFoundError as e:
+        return {'message': str(e)}
+
+    except Exception as e:
+        return {'message': f"An error occurred: {str(e)}"}

@@ -51,6 +51,22 @@ class CreateMediaSheet(APIView):
 
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class ClearSheet(APIView):
+    def post(self, request):
+        try:
+            name = request.data.get('name')
+            sheet_name = request.data.get('sheet_name') 
+            row_start = request.data.get('row_start')
+            path = os.path.join(PATH_SAVE_DIR, name + '.xlsx')
+
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+
+            res = action.clear_data(path, sheet_name, row_start)
+            return Response(res, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GetDataSheet(APIView):
     def get(self, request, *args, **kwargs):
@@ -238,7 +254,6 @@ class DeleteMedia(APIView):
             return Response({'message': 'Media not found'}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as e:
-            # Handle unexpected exceptions
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 # class CheckWorker(APIView):
 #     def get(self, request):
