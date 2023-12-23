@@ -166,46 +166,26 @@ class CreateNewSheet(APIView):
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-# class Download(View):
-#     def get(self, request):
-#         file_name = 'media.xlsx'
-#         file_path = os.path.join(BASE_DIR, 'manage/media', file_name)
+class Download(APIView):
+    def get(self, request):
+        file_name = 'media.xlsx'
+        file_path = os.path.join(BASE_DIR, 'manage/media', file_name)
+        
 
-#         # Fetch data from the Media model
-#         media_instances = Media.objects.all()
+        try:
+            with open(file_path, 'rb') as f:
+                file_data = f.read()
 
-#         # Serialize the data
-#         serializer = MediaSerializer(media_instances, many=True)
+            # Sending response
+            response = HttpResponse(file_data, content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = f'attachment; filename="{file_name}"'
 
-#         # Convert the serialized data to a pandas DataFrame
-#         data_frame = pd.DataFrame(serializer.data)
+        except IOError:
+            # Handle file not exist case here
+            response = HttpResponseNotFound('<h1>File not exist</h1>')
 
-#         # Create a new Excel workbook
-#         workbook = Workbook()
-#         sheet = workbook.active
-
-#         # Write the data to the Excel file
-#         for idx, row in enumerate(data_frame.iterrows(), start=2):
-#             for col_idx, value in enumerate(row[1], start=1):
-#                 sheet.cell(row=idx, column=col_idx, value=value)
-
-#         # Save the workbook to the file path
-#         workbook.save(file_path)
-
-#         try:
-#             # Read the file data
-#             with open(file_path, 'rb') as f:
-#                 file_data = f.read()
-
-#             # Sending response
-#             response = HttpResponse(file_data, content_type='application/vnd.ms-excel')
-#             response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-
-#         except IOError:
-#             # Handle file not exist case here
-#             response = HttpResponseNotFound('<h1>File not exist</h1>')
-
-#         return response
+        return response
+    
 class CreateMedia(APIView):
     def post(self, request, *args, **kwargs):
         serializer = MediaSerializer(data=request.data)
