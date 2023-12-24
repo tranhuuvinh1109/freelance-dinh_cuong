@@ -168,23 +168,29 @@ class CreateNewSheet(APIView):
         
 class Download(APIView):
     def get(self, request):
+        media_instances = Media.objects.all().values(
+            'location', 'name_ttcq', 'phone_staff', 'km', 'name', 'phone', 'date', 'note'
+        )
+
+        serializer = MediaSerializer(media_instances, many=True)
         file_name = 'media.xlsx'
         file_path = os.path.join(BASE_DIR, 'manage/media', file_name)
-        
+
+        if not action.has_data_from_row(file_path, 'media', row_number=6):
+            action.insert_data_into_excel(file_path, 'media', serializer.data)
 
         try:
             with open(file_path, 'rb') as f:
                 file_data = f.read()
 
-            # Sending response
             response = HttpResponse(file_data, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = f'attachment; filename="{file_name}"'
 
         except IOError:
-            # Handle file not exist case here
             response = HttpResponseNotFound('<h1>File not exist</h1>')
 
         return response
+
     
 class CreateMedia(APIView):
     def post(self, request, *args, **kwargs):
@@ -212,6 +218,20 @@ class GetAllMedia(APIView):
         serializer = MediaSerializer(media_instances, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class GetAllMediaFormated(APIView):
+    def get(self, request, *args, **kwargs):
+        media_instances = Media.objects.all().values(
+            'location', 'name_ttcq', 'phone_staff', 'km', 'name', 'phone', 'date', 'note'
+        )
+
+        serializer = MediaSerializer(media_instances, many=True)
+        serialized_data = serializer.data
+
+        formatted_data = [[item['location'], item['name_ttcq'], item['phone_staff'], item['km'],
+                           item['name'], item['phone'], item['date'], item['note']] for item in serialized_data]
+
+        return Response(formatted_data, status=status.HTTP_200_OK)
 class GetMediaByID(APIView):
     def get(self, request, pk, *args, **kwargs):
         try:

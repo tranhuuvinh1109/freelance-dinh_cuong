@@ -16,4 +16,5 @@ urlpatterns = [
     path('media/<int:media_id>/', views.GetMediaByID.as_view(), name='sheet'),
     path('media/delete-all', views.DeleteAllMedia.as_view(), name='sheet'),
     path('media/', views.GetAllMedia.as_view(), name='sheet'),
+    path('media-formated/', views.GetAllMediaFormated.as_view(), name='sheet'),
 ]

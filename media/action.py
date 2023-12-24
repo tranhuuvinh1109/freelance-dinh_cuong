@@ -80,6 +80,28 @@ def insert_multiple(file, sheet, rows_of_values):
     return {'message': 'Insert success', 'sheet_name': sheet, 'values': rows_of_values}
 
 
+
+def has_data_from_row(file, sheet, row_number):
+    try:
+        workbook = load_workbook(file)
+        worksheet = workbook[sheet]
+
+        # Check if any cell in the specified row has data
+        for col_num in range(1, worksheet.max_column + 1):
+            cell_location = f"{chr(ord('A') + col_num - 1)}{row_number}"
+            if worksheet[cell_location].value is not None:
+                workbook.close()
+                return True
+        workbook.close()
+
+        return False
+
+    except Exception as e:
+        # Handle exceptions as needed
+        print(f"Error checking data: {str(e)}")
+        return False
+    
+
 def create_new_sheet(file, new_sheet_name):
     try:
         if not os.path.exists(file):
@@ -181,3 +203,45 @@ def clear_data(file, sheet, start_row):
 
     except Exception as e:
         return {'message': f"An error occurred: {str(e)}"}
+    
+def insert_data_into_excel(file, sheet, data):
+    try:
+        # If the file does not exist, create a new workbook
+        if not os.path.exists(file):
+            workbook = Workbook()
+            workbook.save(file)
+
+        workbook = load_workbook(file)
+
+    except Exception as e:
+        return {'message': f"Error loading workbook: {str(e)}"}
+
+    if sheet not in workbook.sheetnames:
+        workbook.create_sheet(title=sheet)
+
+    worksheet = workbook[sheet]
+
+    # If the sheet is empty, write headers
+    if worksheet.max_row == 1:
+        headers = list(data[0].keys())
+        for col_num, header in enumerate(headers, start=1):
+            cell_location = f"{chr(ord('A') + col_num - 1)}1"
+            worksheet[cell_location] = header
+
+    # Get the last row in the sheet
+    last_row = worksheet.max_row + 1
+
+    # Iterate through the data and insert into the sheet
+    for row_data in data:
+        for col_num, (header, value) in enumerate(row_data.items(), start=1):
+            cell_location = f"{chr(ord('A') + col_num - 1)}{last_row}"
+            worksheet[cell_location] = value
+
+        # Move to the next row
+        last_row += 1
+
+    # Save the changes to the workbook
+    workbook.save(file)
+    workbook.close()
+
+    return {'message': 'Insert success', 'sheet_name': sheet, 'values': data}
