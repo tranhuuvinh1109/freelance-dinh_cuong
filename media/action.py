@@ -245,3 +245,27 @@ def insert_data_into_excel(file, sheet, data):
     workbook.close()
 
     return {'message': 'Insert success', 'sheet_name': sheet, 'values': data}
+
+def clear_data_sheet(file, sheet, start_row=2):
+    try:
+        if not os.path.exists(file):
+            return {'message': 'File not found'}
+
+        workbook = load_workbook(file)
+
+    except Exception as e:
+        return {'message': f"Error loading workbook: {str(e)}"}
+
+    if sheet not in workbook.sheetnames:
+        return {'message': f"Sheet '{sheet}' not found in the workbook"}
+
+    worksheet = workbook[sheet]
+
+    for row in worksheet.iter_rows(min_row=start_row):
+        for cell in row:
+            cell.value = None
+
+    workbook.save(file)
+    workbook.close()
+
+    return {'message': f'Cleared data from row {start_row} onward', 'sheet_name': sheet}

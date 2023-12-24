@@ -171,13 +171,14 @@ class Download(APIView):
         media_instances = Media.objects.all().values(
             'location', 'name_ttcq', 'phone_staff', 'km', 'name', 'phone', 'date', 'note'
         )
-
         serializer = MediaSerializer(media_instances, many=True)
+
         file_name = 'media.xlsx'
         file_path = os.path.join(BASE_DIR, 'manage/media', file_name)
 
-        if not action.has_data_from_row(file_path, 'media', row_number=6):
-            action.insert_data_into_excel(file_path, 'media', serializer.data)
+        action.clear_data_sheet(file_path, 'media', start_row=6)
+
+        action.insert_data_into_excel(file_path, 'media', serializer.data)
 
         try:
             with open(file_path, 'rb') as f:
@@ -190,7 +191,6 @@ class Download(APIView):
             response = HttpResponseNotFound('<h1>File not exist</h1>')
 
         return response
-
     
 class CreateMedia(APIView):
     def post(self, request, *args, **kwargs):
