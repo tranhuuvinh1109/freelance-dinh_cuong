@@ -84,7 +84,7 @@ class CreateReport(APIView):
             report_data = serializer.validated_data
 
             serializer.save()
-            send_mail_to_admin(serializer.data['location'], ['dinhcuongbkdn96@gmail.com', 'tranhuudu113@gmail.com'], serializer.data['date_report'])
+            send_mail_to_admin(serializer.data['location'], ['dinhcuongbkdn96@gmail.com'], serializer.data['date_report'])
             return Response(
                 {'message': 'Report created successfully', 'data': serializer.data},
                 status=status.HTTP_201_CREATED
