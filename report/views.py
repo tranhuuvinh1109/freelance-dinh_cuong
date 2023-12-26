@@ -5,6 +5,7 @@ import os
 from rest_framework.response import Response
 from django.http import HttpResponse, HttpResponseNotFound
 from report.create_word import clear_word_document, create_report_docx
+from report.sendMail import send_mail_to_admin
 from report.transform_object import transform_report
 from .serializers import *
 from rest_framework.views import APIView
@@ -80,8 +81,10 @@ class CreateReport(APIView):
         try:
             serializer = ReportSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            report_data = serializer.validated_data 
+            report_data = serializer.validated_data
+
             serializer.save()
+            send_mail_to_admin(serializer.data['location'], ['dinhcuongbkdn96@gmail.com', 'tranhuudu113@gmail.com'], serializer.data['date_report'])
             return Response(
                 {'message': 'Report created successfully', 'data': serializer.data},
                 status=status.HTTP_201_CREATED
@@ -94,23 +97,24 @@ class GetReports(APIView):
         try:
             reports = Report.objects.all()
             serializer = ReportSerializer(reports, many=True)
-            report = {
-                "location": "QNN/NTG",
-                "start_day": "25/12/2023",
-                "end_day": "26/12/2023",
-                "device": "BT",
-                "cable": "BT",
-                "power": "SC",
-                "report": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                "other_job": "Other job details go here.",
-                "exist": "Existing conditions description.",
-                "propose": "Proposed actions or solutions.",
-                "creator": "Tran huu Vinh",
-                "save": "NTG-26"
-            }
-            path = os.path.join(PATH_SAVE_DIR)
+            # report = {
+            #     "location": "QNN/NTG",
+            #     "start_day": "25/12/2023",
+            #     "end_day": "26/12/2023",
+            #     "device": "BT",
+            #     "cable": "BT",
+            #     "power": "SC",
+            #     "report": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            #     "other_job": "Other job details go here.",
+            #     "exist": "Existing conditions description.",
+            #     "propose": "Proposed actions or solutions.",
+            #     "creator": "Tran huu Vinh",
+            #     "save": "NTG-26"
+            # }
+            # path = os.path.join(PATH_SAVE_DIR)
             # os.makedirs(os.path.dirname(path), exist_ok=True)
-            create_report_docx("vinh.docx",path, report)
+            # create_report_docx("vinh.docx",path, report)
+            # send_mail_to_admin(report['location'], ['dinhcuongbkdn96@gmail.com', 'tranhuudu113@gmail.com'], report['start_day'])
 
             return Response({'data': serializer.data}, status=status.HTTP_200_OK)
 
