@@ -24,5 +24,5 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'manage/media')
 urlpatterns = [
     path('admin/', admin.site.urls),
-	path('api/', include('media.urls'))
+	path('api/', include('media.urls')),
 ]+ static(MEDIA_URL, document_root=MEDIA_ROOT)
