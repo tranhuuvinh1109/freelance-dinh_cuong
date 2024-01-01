@@ -95,7 +95,7 @@ class CreateReport(APIView):
 class GetReports(APIView):
     def get(self, request, *args, **kwargs):
         try:
-            reports = Report.objects.all()
+            reports = Reported.objects.all()
             serializer = ReportSerializer(reports, many=True)
             # report = {
             #     "location": "QNN/NTG",
@@ -127,7 +127,7 @@ class GetReportByLocationAndDate(APIView):
             location = kwargs.get('location')
             location = f"QNN/{location}"
             date_report = kwargs.get('date').replace("-", "/")
-            reports = Report.objects.filter(location=location, date_report=date_report)
+            reports = Reported.objects.filter(location=location, date_report=date_report)
             serializer = ReportSerializer(reports, many=True)
 
             return Response({'data': serializer.data}, status=status.HTTP_200_OK)
@@ -137,7 +137,7 @@ class GetReportByLocationAndDate(APIView):
 class DeleteAllReports(APIView):
     def delete(self, request, *args, **kwargs):
         try:
-            Report.objects.all().delete()
+            Reported.objects.all().delete()
 
             return Response(
                 {'message': 'All reports deleted successfully'},
@@ -150,7 +150,7 @@ class DeleteAllReports(APIView):
 
 def get_reports_by_location_and_date(location, date_report):
     try:
-        reports = Report.objects.filter(location=location, date_report=date_report)
+        reports = Reported.objects.filter(location=location, date_report=date_report)
         serializer = ReportSerializer(reports, many=True)
 
         return serializer.data
@@ -183,8 +183,7 @@ class DownloadReport(APIView):
 
 class DownloadReportByID(APIView):
     def get(self, request, report_id, *args, **kwargs):
-        res = Report.objects.get(pk=report_id)
-
+        res = Reported.objects.get(pk=report_id)
         if res:
             path = os.path.join(PATH_SAVE_DIR)
             file_path = os.path.join(BASE_DIR, 'manage/media', "report.docx")

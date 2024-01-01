@@ -26,7 +26,7 @@ class LoginSerializer(serializers.Serializer):
     
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Report
+        model = Reported
         # fields = ['id','location', 'date_report', 'device', 'cable', 'power', 'report', 'other_job','exist','propose', 'creator', 'date']
         exclude = ['createAt', 'updateAt']
 

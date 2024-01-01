@@ -42,7 +42,7 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.email
 
-class Report(models.Model):
+class Reported(models.Model):
     id = models.AutoField(primary_key=True)
     location = models.CharField(max_length=255)
     date_report = models.CharField(max_length=255)
@@ -57,4 +57,7 @@ class Report(models.Model):
     date = models.CharField(max_length=255)
     createAt = models.DateTimeField(auto_now_add=True)
     updateAt = models.DateTimeField(auto_now=True)
+    sv_device = models.CharField(max_length=255)
+    sv_cable = models.CharField(max_length=255)
+    sv_power = models.CharField(max_length=255)
 
